@@ -7,11 +7,22 @@ from langchain_core.messages import HumanMessage
 from tavily import TavilyClient
 from langchain_tavily import TavilySearch
 import tavily
+from typing import List
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
 tavily = TavilyClient()
 
+class Source(BaseModel):
+    """schema for the source used by agent """
+    url:str = Field(description="The url of the source")
+
+
+class AgentResponse(BaseModel):
+    """ Schema for agent response with answer and the sources """
+    answers:str = Field(description="the agent's findings")
+    sources:List[Source] = Field(default_factory=List, description="URL sources of those answers")
 
 @tool
 def search(query: str) -> str:
@@ -24,7 +35,7 @@ def search(query: str) -> str:
 
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
 tools = [TavilySearch()]
-agent = create_agent(model=llm, tools=tools)
+agent = create_agent(model=llm, tools=tools, response_format=AgentResponse)
 
 
 
